@@ -63,9 +63,9 @@ void loop()
 
     button_publisher.publish(&button_msg);
     node_handle.spinOnce();
-    
-    analogWrite(ENA, 170);
-    analogWrite(ENB, 170);
+
+    analogWrite(ENA, 160);
+    analogWrite(ENB, 160);
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, HIGH);
