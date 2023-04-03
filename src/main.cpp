@@ -21,7 +21,8 @@ float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -100 to 100 (%)
 float Kp, Ki, Kd; // PID parameter
 float P, I, D; // Value of Proportional Integral Differential
-
+float L = 0.235; // distance between 2 wheel (m)
+float r_wheel = 0.05; // radian of wheel (m)
 void ~
 
 ros::NodeHandle nh;
@@ -37,7 +38,7 @@ void setup()
 }
 int calculate_vright(float v, float omega)
 {
-    
+
 }
 int calculate_vleft(float v, float omega)
 {
