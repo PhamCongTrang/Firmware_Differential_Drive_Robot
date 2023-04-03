@@ -99,10 +99,17 @@ void hash_PWM(int duty_left, int duty_right)
 }
 void loop()
 {
+    velBack.linear.x = vBack;
+    velBack.angular.z = omegaBack;
+    pubvel.publish(&velBack);
+    
+    nh.spinOnce();
+
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
 
     duty_right = PID(vr_set, vr_mea);
     duty_left = PID(vl_set, vl_mea);
     hash_PWM(duty_left, duty_right);
+
 }
