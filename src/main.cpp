@@ -1,4 +1,5 @@
 #include <ros.h>
+#include <geometry_msgs/Twist.h>
 #include <Arduino.h>
 
 #define ENA 8
@@ -21,7 +22,10 @@ int duty_left, duty_right; // Duty of PWM pulse. Range from -100 to 100 (%)
 float Kp, Ki, Kd; // PID parameter
 float P, I, D; // Value of Proportional Integral Differential
 
+void ~
 
+ros::NodeHandle nh;
+ros::Subscriber velSub = nh.subscribe("/cmd_vel",1000,) 
 void setup()
 {
     pinMode(ENA, OUTPUT);
