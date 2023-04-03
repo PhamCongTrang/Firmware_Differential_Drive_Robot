@@ -50,11 +50,15 @@ int calculate_vleft(float v, float omega)
 {
     return v - L*omega/2;
 }
-int PID(float vr_set, float vr_mea)
+/*
+* Return duty
+* Use both left & right motor
+*/
+int PID(float v_set, float v_mea)
 {
 
 }
-int hash_PWM(int duty_left, int duty_right)
+void hash_PWM(int duty_left, int duty_right)
 {
     while ((millis() - pret) < cycle)
     {
@@ -86,10 +90,10 @@ int hash_PWM(int duty_left, int duty_right)
 }
 void loop()
 {
-    analogWrite(ENA, 160);
-    analogWrite(ENB, 160);
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN2, LOW);
+    vr_set = calculate_vright(v, omega);
+    vl_set = calculate_vleft(v, omega);
+
+    duty_right = PID(vr_set, vr_mea);
+    duty_left = PID(vl_set, vl_mea);
+    hash_PWM(duty_left, duty_right);
 }
