@@ -46,7 +46,10 @@ void setup()
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
+    
+    nh.initNode();
     nh.subscribe(subvel);
+    nh.advertise(pubvel);
 }
 int calculate_vright(float v, float omega)
 {
