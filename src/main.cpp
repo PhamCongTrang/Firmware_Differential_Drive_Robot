@@ -13,8 +13,10 @@
 #define A2 20
 #define B2 21
 
-float v; //linear.x (m/s)
-float omega; //angular.z(rad/s)
+float v; //linear.x (m/s) subcribe
+float omega; //angular.z(rad/s) subcribe
+float vBack; //linear.x (m/s) publish
+float omegaBack;//angular.z(rad/s) publish
 int pret = 0; // Temp of time 
 int cycle = 100; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
@@ -25,13 +27,17 @@ float P, I, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
 float r_wheel = 0.05; // radian of wheel (m)
 
-void velReceived(const geometry_msgs::Twist &msg){
-    v = msg.linear.x;
-    omega = msg.angular.z;
+void velReceived(const geometry_msgs::Twist &msgIn){
+    v = msgIn.linear.x;
+    omega = msgIn.angular.z;
 }
+
+geometry_msgs::Twist velBack;
 
 ros::NodeHandle nh;
 ros::Subscriber<geometry_msgs::Twist> subvel("/cmd_vel",&velReceived);
+ros::Publisher pubvel("/velocity_publisher",&velBack);
+
 void setup()
 {
     pinMode(ENA, OUTPUT);
@@ -40,7 +46,10 @@ void setup()
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
+    
+    nh.initNode();
     nh.subscribe(subvel);
+    nh.advertise(pubvel);
 }
 int calculate_vright(float v, float omega)
 {
