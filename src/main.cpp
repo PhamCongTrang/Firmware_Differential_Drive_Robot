@@ -33,7 +33,7 @@ void setup()
 }
 int calculate_vright(float v, float omega)
 {
-
+    
 }
 int calculate_vleft(float v, float omega)
 {
