@@ -62,7 +62,33 @@ int PID(float vr_set, float vr_mea)
 }
 int hash_PWM(int duty_left, int duty_right)
 {
-
+    while ((millis() - pret) < cycle)
+    {
+        if(duty_left >= 0)
+        {
+            analogWrite(ENA, duty_left);
+            digitalWrite(IN1, HIGH);
+            digitalWrite(IN2, LOW);
+        }
+        if(duty_left < 0)
+        {
+            analogWrite(ENA, -duty_left);
+            digitalWrite(IN1, LOW);
+            digitalWrite(IN2, HIGH);
+        }
+        if(duty_right >= 0)
+        {
+            analogWrite(ENB, duty_right);
+            digitalWrite(IN3, HIGH);
+            digitalWrite(IN4, LOW);
+        }
+        if(duty_right < 0)
+        {
+            analogWrite(ENB, -duty_right);
+            digitalWrite(IN3, LOW);
+            digitalWrite(IN4, HIGH);
+        }
+    }
 }
 void loop()
 {
