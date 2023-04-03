@@ -38,11 +38,11 @@ void setup()
 }
 int calculate_vright(float v, float omega)
 {
-
+    return v + L*omega/2;
 }
 int calculate_vleft(float v, float omega)
 {
-
+    return v - L*omega/2;
 }
 int PID(float vr_set, float vr_mea)
 {
