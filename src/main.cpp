@@ -13,7 +13,8 @@
 #define A2 20
 #define B2 21
 
-float v; //angular.x (m/s)
+float v; //linear.x (m/s)
+float omega; //angular.z(rad/s)
 int pret = 0; // Temp of time 
 int cycle = 100; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
@@ -22,10 +23,13 @@ int duty_left, duty_right; // Duty of PWM pulse. Range from -100 to 100 (%)
 float Kp, Ki, Kd; // PID parameter
 float P, I, D; // Value of Proportional Integral Differential
 
-void ~
+void velReceived(const geometry_msgs::Twist &msg){
+    v = msg.linear.x;
+    omega = msg.angular.z;
+}
 
 ros::NodeHandle nh;
-ros::Subscriber velSub = nh.subscribe("/cmd_vel",1000,) 
+ros::Subscriber<geometry_msgs::Twist> subvel("/cmd_vel",&velReceived);
 void setup()
 {
     pinMode(ENA, OUTPUT);
@@ -34,6 +38,7 @@ void setup()
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
+    nh.subscribe(subvel);
 }
 int calculate_vright(float v, float omega)
 {
