@@ -2,16 +2,17 @@
 #include <geometry_msgs/Twist.h>
 #include <Arduino.h>
 
+
 #define ENA 8
 #define ENB 9
 #define IN1 30
 #define IN2 32
 #define IN3 34
 #define IN4 36
-#define A1 18 //left
-#define B1 19 //left
-#define A2 20 //right
-#define B2 21 //right
+#define A1 18 
+#define BB1 19 
+#define A2 20 
+#define B2 21 
 
 float v; //linear.x (m/s) subcribe
 float omega; //angular.z(rad/s) subcribe
@@ -41,6 +42,17 @@ ros::NodeHandle nh;
 ros::Subscriber<geometry_msgs::Twist> subvel("/cmd_vel",&velReceived);
 ros::Publisher pubvel("/velocity_publisher",&velBack);
 
+void encoder_counter_right()
+{
+    if(digitalRead(BB1) == LOW) cnt_r++;
+    else cnt_r--;
+}
+void encoder_counter_left()
+{
+    if(digitalRead(B2) == LOW) cnt_l++;
+    else cnt_l --;
+}
+
 void setup()
 {
     pinMode(ENA, OUTPUT);
@@ -62,18 +74,8 @@ void setup()
     attachInterrupt(5, encoder_counter_left, RISING);
     attachInterrupt(3, encoder_counter_right, RISING);
 
+}
 
-}
-void encoder_counter_right()
-{
-    if(digitalRead(B1) = LOW) cnt_r++;
-    else cnt_r--;
-}
-void encoder_counter_left()
-{
-    if(digitalRead(B2) == LOW) cnt_l++;
-    else cnt_l --;
-}
 int measure_speed(long int cnt, long int pre_cnt)
 {
     return (cnt - pre_cnt)/ppr*2*3.1415*r_wheel/(cycle/1000);
@@ -131,6 +133,7 @@ void hash_PWM(int duty_left, int duty_right)
             digitalWrite(IN4, HIGH);
         }
     }
+    pret = millis();
 }
 void loop()
 {
