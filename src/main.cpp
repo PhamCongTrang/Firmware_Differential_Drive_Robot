@@ -102,7 +102,7 @@ void loop()
     velBack.linear.x = vBack;
     velBack.angular.z = omegaBack;
     pubvel.publish(&velBack);
-    
+    // nothing
     nh.spinOnce();
 
     vr_set = calculate_vright(v, omega);
