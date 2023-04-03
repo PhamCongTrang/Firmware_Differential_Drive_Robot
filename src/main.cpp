@@ -18,11 +18,11 @@ float v; //linear.x (m/s) subcribe
 float omega; //angular.z(rad/s) subcribe
 float vBack; //linear.x (m/s) publish
 float omegaBack;//angular.z(rad/s) publish
-int pret = 0; // Temp of time 
+unsigned long pret = 0; // Temp of time 
 int cycle = 100; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
-int duty_left, duty_right; // Duty of PWM pulse. Range from -100 to 100 (%)
+int duty_left, duty_right; // Duty of PWM pulse. Range from -255 to 255;
 float Kp = 80, Ki = 0, Kd = 0; // PID parameter
 float P, I = 0, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
@@ -141,11 +141,19 @@ void loop()
 
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
+
     vr_mea = measure_speed(cnt_r, pre_cnt_r);
+    pre_cnt_r = cnt_r;
     vl_mea = measure_speed(cnt_l, pre_cnt_l);
+    pre_cnt_l = cnt_l;
+
     duty_right += PID(vr_set, vr_mea);
     duty_left += PID(vl_set, vl_mea);
+
     hash_PWM(duty_left, duty_right);
+
+    vBack = (vr_mea + vl_mea)/2;
+    omegaBack = (vr_mea - vl_mea)/L;
 
     velBack.linear.x = vBack;
     velBack.angular.z = omegaBack;
