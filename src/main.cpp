@@ -8,10 +8,10 @@
 #define IN2 32
 #define IN3 34
 #define IN4 36
-#define A1 18
-#define B1 19
-#define A2 20
-#define B2 21
+#define A1 18 //left
+#define B1 19 //left
+#define A2 20 //right
+#define B2 21 //right
 
 float v; //linear.x (m/s) subcribe
 float omega; //angular.z(rad/s) subcribe
@@ -22,11 +22,14 @@ int cycle = 100; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -100 to 100 (%)
-float Kp, Ki, Kd; // PID parameter
-float P, I, D; // Value of Proportional Integral Differential
+float Kp = 80, Ki = 0, Kd = 0; // PID parameter
+float P, I = 0, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
 float r_wheel = 0.05; // radian of wheel (m)
-
+float pre_v_err = 0; // pre v error (m/s)
+volatile long cnt_l = 0, cnt_r = 0;
+volatile long pre_cnt_l = 0, pre_cnt_r = 0;
+int ppr = 330; //pulse per revolution
 void velReceived(const geometry_msgs::Twist &msgIn){
     v = msgIn.linear.x;
     omega = msgIn.angular.z;
@@ -46,10 +49,34 @@ void setup()
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
-    
+
+    pinMode(A1, INPUT_PULLUP);
+    pinMode(B1, INPUT_PULLUP);
+    pinMode(A2, INPUT_PULLUP);
+    pinMode(B2, INPUT_PULLUP);
+
     nh.initNode();
     nh.subscribe(subvel);
     nh.advertise(pubvel);
+
+    attachInterrupt(5, encoder_counter_left, RISING);
+    attachInterrupt(3, encoder_counter_right, RISING);
+
+
+}
+void encoder_counter_right()
+{
+    if(digitalRead(B1) = LOW) cnt_r++;
+    else cnt_r--;
+}
+void encoder_counter_left()
+{
+    if(digitalRead(B2) == LOW) cnt_l++;
+    else cnt_l --;
+}
+int measure_speed(long int cnt, long int pre_cnt)
+{
+    return (cnt - pre_cnt)/ppr*2*3.1415*r_wheel/(cycle/1000);
 }
 int calculate_vright(float v, float omega)
 {
@@ -65,7 +92,15 @@ int calculate_vleft(float v, float omega)
 */
 int PID(float v_set, float v_mea)
 {
-
+   int v_err = v_set - v_mea;
+   P = Kp*v_err;
+   I += Ki*v_err*(cycle/100);
+   D = (v_err - pre_v_err)/(cycle/100);
+   pre_v_err = v_err;
+   int duty = P + I + D;
+   if (duty > 255) duty = 255;
+   if (duty < -255) duty = -255;
+   return duty;
 }
 void hash_PWM(int duty_left, int duty_right)
 {
@@ -99,17 +134,18 @@ void hash_PWM(int duty_left, int duty_right)
 }
 void loop()
 {
-    velBack.linear.x = vBack;
-    velBack.angular.z = omegaBack;
-    pubvel.publish(&velBack);
-    // nothing
     nh.spinOnce();
 
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
-
-    duty_right = PID(vr_set, vr_mea);
-    duty_left = PID(vl_set, vl_mea);
+    vr_mea = measure_speed(cnt_r, pre_cnt_r);
+    vl_mea = measure_speed(cnt_l, pre_cnt_l);
+    duty_right += PID(vr_set, vr_mea);
+    duty_left += PID(vl_set, vl_mea);
     hash_PWM(duty_left, duty_right);
 
+    velBack.linear.x = vBack;
+    velBack.angular.z = omegaBack;
+    pubvel.publish(&velBack);
+    delay(1);
 }
