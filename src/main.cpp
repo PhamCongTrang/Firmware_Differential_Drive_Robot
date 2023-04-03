@@ -22,7 +22,7 @@ int cycle = 100; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -100 to 100 (%)
-float Kp = 50, Ki = 0, Kd = 0; // PID parameter
+float Kp = 80, Ki = 0, Kd = 0; // PID parameter
 float P, I = 0, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
 float r_wheel = 0.05; // radian of wheel (m)
