@@ -46,7 +46,7 @@ void setup()
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
-    
+
     nh.initNode();
     nh.subscribe(subvel);
     nh.advertise(pubvel);
@@ -99,12 +99,6 @@ void hash_PWM(int duty_left, int duty_right)
 }
 void loop()
 {
-    velBack.linear.x = vBack;
-    velBack.angular.z = omegaBack;
-    pubvel.publish(&velBack);
-    
-    nh.spinOnce();
-
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
 
@@ -112,4 +106,5 @@ void loop()
     duty_left = PID(vl_set, vl_mea);
     hash_PWM(duty_left, duty_right);
 
+    
 }
