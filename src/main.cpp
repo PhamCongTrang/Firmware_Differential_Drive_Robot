@@ -26,7 +26,7 @@ int cycle = 400; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -255 to 255;
-float Kp = 12, Ki = 1, Kd = 2; // PID parameter
+float Kp = 12, Ki = 1, Kd = 4; // PID parameter
 float P, I = 0, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
 float r_wheel = 0.05; // radian of wheel (m)
@@ -144,9 +144,9 @@ void loop()
 {
     //nh.spinOnce();
     // delay(1);
-    v = 1;
+    v = 2;
     omega = 0;
-    //Serial.print("cnt_l, cnt_r"); Serial.print(cnt_l); Serial.print("  "); Serial.println(cnt_r);
+    Serial.print("cnt_l, cnt_r"); Serial.print(cnt_l); Serial.print("  "); Serial.println(cnt_r);
 
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
