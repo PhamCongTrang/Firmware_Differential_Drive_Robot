@@ -77,7 +77,7 @@ void setup()
     attachInterrupt(CA1I, encoder_counter_left, RISING); 
     attachInterrupt(CA2I, encoder_counter_right, RISING); 
 
-    Serial.begin(9600);
+    //Serial.begin(9600);
 }
 
 float measure_speed(long int cnt, long int pre_cnt)
@@ -142,8 +142,8 @@ void hash_PWM(int duty_left, int duty_right)
 }
 void loop()
 {
-    //nh.spinOnce();
-    // delay(1);
+    nh.spinOnce();
+    delay(1);
     v = 2;
     omega = 0;
     Serial.print("cnt_l, cnt_r"); Serial.print(cnt_l); Serial.print("  "); Serial.println(cnt_r);
