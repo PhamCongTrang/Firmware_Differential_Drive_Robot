@@ -138,6 +138,7 @@ void hash_PWM(int duty_left, int duty_right)
 void loop()
 {
     nh.spinOnce();
+    delay(1);
 
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
@@ -158,5 +159,5 @@ void loop()
     velBack.linear.x = vBack;
     velBack.angular.z = omegaBack;
     pubvel.publish(&velBack);
-    delay(1);
+    
 }
