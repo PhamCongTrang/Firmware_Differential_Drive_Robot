@@ -2,28 +2,31 @@
 #include <geometry_msgs/Twist.h>
 #include <Arduino.h>
 
+#define ENA 9
+#define ENB 8
 
-#define ENA 8
-#define ENB 9
 #define IN1 30
 #define IN2 32
-#define IN3 34
-#define IN4 36
-#define A1 18 
-#define BB1 19 
-#define A2 20 
-#define B2 21 
+#define IN3 36
+#define IN4 34
+
+#define CA1 21
+#define CA1I 2 //Interup 1
+#define CB1 20
+#define CA2 18
+#define CA2I 5 //Interup 2
+#define CB2 19
 
 float v; //linear.x (m/s) subcribe
 float omega; //angular.z(rad/s) subcribe
 float vBack; //linear.x (m/s) publish
 float omegaBack;//angular.z(rad/s) publish
 unsigned long pret = 0; // Temp of time 
-int cycle = 100; // cycle to read encoder & calculate PID (ms)
+int cycle = 400; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -255 to 255;
-float Kp = 80, Ki = 0, Kd = 0; // PID parameter
+float Kp = 12, Ki = 1, Kd = 4; // PID parameter
 float P, I = 0, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
 float r_wheel = 0.05; // radian of wheel (m)
@@ -44,12 +47,12 @@ ros::Publisher pubvel("/velocity_publisher",&velBack);
 
 void encoder_counter_right()
 {
-    if(digitalRead(BB1) == LOW) cnt_r++;
+    if(digitalRead(CB2) == LOW) cnt_r++;
     else cnt_r--;
 }
 void encoder_counter_left()
 {
-    if(digitalRead(B2) == LOW) cnt_l++;
+    if(digitalRead(CB1) == LOW) cnt_l++;
     else cnt_l --;
 }
 
@@ -62,31 +65,32 @@ void setup()
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
 
-    pinMode(A1, INPUT_PULLUP);
-    pinMode(B1, INPUT_PULLUP);
-    pinMode(A2, INPUT_PULLUP);
-    pinMode(B2, INPUT_PULLUP);
+    pinMode(18, INPUT_PULLUP);
+    pinMode(19, INPUT_PULLUP);
+    pinMode(20, INPUT_PULLUP);
+    pinMode(21, INPUT_PULLUP);
 
     nh.initNode();
     nh.subscribe(subvel);
     nh.advertise(pubvel);
 
-    attachInterrupt(5, encoder_counter_left, RISING);
-    attachInterrupt(3, encoder_counter_right, RISING);
+    attachInterrupt(CA1I, encoder_counter_left, RISING); 
+    attachInterrupt(CA2I, encoder_counter_right, RISING); 
 
+    Serial.begin(9600);
 }
 
 float measure_speed(long int cnt, long int pre_cnt)
 {
-    return (cnt - pre_cnt)/ppr*2*3.1415*r_wheel/(cycle/1000);
+    return (cnt - pre_cnt)/(ppr+0.0)*2*3.1415*r_wheel/(cycle/1000.0);
 }
 float calculate_vright(float v, float omega)
 {
-    return v + L*omega/2;
+    return (v + L*omega/2);
 }
 float calculate_vleft(float v, float omega)
 {
-    return v - L*omega/2;
+    return (v - L*omega/2);
 }
 /*
 * Return duty
@@ -94,18 +98,18 @@ float calculate_vleft(float v, float omega)
 */
 int PID(float v_set, float v_mea)
 {
-   int v_err = v_set - v_mea;
+   float v_err = v_set - v_mea;
    P = Kp*v_err;
-   I += Ki*v_err*(cycle/100);
-   D = (v_err - pre_v_err)/(cycle/100);
+   I += Ki*v_err*(cycle/1000);
+   D = Kd*(v_err - pre_v_err)/(cycle/1000.0);
    pre_v_err = v_err;
-   int duty = P + I + D;
-   if (duty > 255) duty = 255;
-   if (duty < -255) duty = -255;
+   int duty = (int) (P + I + D);
+
    return duty;
 }
 void hash_PWM(int duty_left, int duty_right)
 {
+    //duty_left = (int) duty_left*1.2;
     while ((millis() - pret) < cycle)
     {
         if(duty_left >= 0)
@@ -133,24 +137,39 @@ void hash_PWM(int duty_left, int duty_right)
             digitalWrite(IN4, HIGH);
         }
     }
+    //delay(cycle);
     pret = millis();
 }
 void loop()
 {
-    nh.spinOnce();
-    delay(1);
+    //nh.spinOnce();
+    // delay(1);
+    v = 2;
+    omega = 0;
+    Serial.print("cnt_l, cnt_r"); Serial.print(cnt_l); Serial.print("  "); Serial.println(cnt_r);
 
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
+    Serial.print("vl_set, vr_set"); Serial.print(vl_set); Serial.print("  "); Serial.println(vr_set);
 
     vr_mea = measure_speed(cnt_r, pre_cnt_r);
     pre_cnt_r = cnt_r;
     vl_mea = measure_speed(cnt_l, pre_cnt_l);
     pre_cnt_l = cnt_l;
-
-    duty_right += PID(vr_set, vr_mea);
+    Serial.print("vl_mea, vr_mea"); Serial.print(vl_mea); Serial.print("  "); Serial.println(vr_mea); 
+    
     duty_left += PID(vl_set, vl_mea);
+    duty_right += PID(vr_set, vr_mea);
+    // duty_left +=(int) 20*(vl_set - vl_mea);
+    // duty_right +=(int) 20*(vr_set - vr_mea);
 
+    if (duty_left > 100) duty_left = 100;
+        if (duty_left < -100) duty_left = -100;
+    if (duty_right > 100) duty_right = 100;
+        if (duty_right < -100) duty_right = -100;
+
+    Serial.print("duty_left, duty_right"); Serial.print(duty_left); Serial.print("  "); Serial.println( duty_right);
+    Serial.print("Time calculate"); Serial.println(millis() - pret);
     hash_PWM(duty_left, duty_right);
 
     vBack = (vr_mea + vl_mea)/2;
@@ -159,5 +178,6 @@ void loop()
     velBack.linear.x = vBack;
     velBack.angular.z = omegaBack;
     pubvel.publish(&velBack);
-    
+    Serial.println("-------------------");
+    //delay(1);
 }
