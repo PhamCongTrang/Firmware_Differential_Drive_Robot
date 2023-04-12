@@ -77,7 +77,7 @@ void setup()
     attachInterrupt(CA1I, encoder_counter_left, RISING); 
     attachInterrupt(CA2I, encoder_counter_right, RISING); 
 
-    Serial.begin(9600);
+    //Serial.begin(9600);
 }
 
 float measure_speed(long int cnt, long int pre_cnt)
@@ -142,21 +142,21 @@ void hash_PWM(int duty_left, int duty_right)
 }
 void loop()
 {
-    //nh.spinOnce();
-    // delay(1);
-    v = 1;
-    omega = 0;
+    nh.spinOnce();
+    delay(1);
+    // v = 1;
+    // omega = 0;
     //Serial.print("cnt_l, cnt_r"); Serial.print(cnt_l); Serial.print("  "); Serial.println(cnt_r);
 
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
-    Serial.print("vl_set, vr_set"); Serial.print(vl_set); Serial.print("  "); Serial.println(vr_set);
+    //Serial.print("vl_set, vr_set"); Serial.print(vl_set); Serial.print("  "); Serial.println(vr_set);
 
     vr_mea = measure_speed(cnt_r, pre_cnt_r);
     pre_cnt_r = cnt_r;
     vl_mea = measure_speed(cnt_l, pre_cnt_l);
     pre_cnt_l = cnt_l;
-    Serial.print("vl_mea, vr_mea"); Serial.print(vl_mea); Serial.print("  "); Serial.println(vr_mea); 
+    //Serial.print("vl_mea, vr_mea"); Serial.print(vl_mea); Serial.print("  "); Serial.println(vr_mea); 
     
     duty_left += PID(vl_set, vl_mea);
     duty_right += PID(vr_set, vr_mea);
@@ -168,8 +168,8 @@ void loop()
     if (duty_right > 100) duty_right = 100;
         if (duty_right < -100) duty_right = -100;
 
-    Serial.print("duty_left, duty_right"); Serial.print(duty_left); Serial.print("  "); Serial.println( duty_right);
-    Serial.print("Time calculate"); Serial.println(millis() - pret);
+    //Serial.print("duty_left, duty_right"); Serial.print(duty_left); Serial.print("  "); Serial.println( duty_right);
+    //Serial.print("Time calculate"); Serial.println(millis() - pret);
     hash_PWM(duty_left, duty_right);
 
     vBack = (vr_mea + vl_mea)/2;
@@ -178,6 +178,6 @@ void loop()
     velBack.linear.x = vBack;
     velBack.angular.z = omegaBack;
     pubvel.publish(&velBack);
-    Serial.println("-------------------");
+    //Serial.println("-------------------");
     //delay(1);
 }
