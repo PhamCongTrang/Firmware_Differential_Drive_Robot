@@ -28,8 +28,8 @@ float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -255 to 255;
 
-float Kp_left = 12, Ki_left = 1, Kd_left = 4; // PID parameter
-float Kp_right = 10, Ki_right = 1, Kd_right = 4; // PID parameter
+float Kp_left = 5.2, Ki_left = 0.15, Kd_left = 0; // PID parameter
+float Kp_right = 5.15, Ki_right = 0.17, Kd_right = 0.5; // PID parameter
 
 float P, I = 0, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
@@ -146,10 +146,14 @@ void hash_PWM(int duty_left, int duty_right)
 }
 void loop()
 {
-    // nh.spinOnce();
-    // delay(1);
-    v = 2;
-    omega = 0;
+    nh.spinOnce();
+    delay(1);
+    // if (Serial.available() > 0) 
+    // {
+    //     Kp_left = Serial.read();
+    // }
+    // v = 1;
+    // omega = 0;
     //Serial.print("cnt_l, cnt_r"); Serial.print(cnt_l); Serial.print("  "); Serial.println(cnt_r);
 
     vr_set = calculate_vright(v, omega);
@@ -182,7 +186,13 @@ void loop()
 
     vBack = (vr_mea + vl_mea)/2;
     omegaBack = (vr_mea - vl_mea)/L;
-
+    Serial.print(",");
+    Serial.print("omegaBack:");
+    Serial.println(omegaBack); 
+    Serial.print(",");
+    Serial.print("vBack:");
+    Serial.println(vBack);
+     
     velBack.linear.x = vBack;
     velBack.angular.z = omegaBack;
     pubvel.publish(&velBack);
