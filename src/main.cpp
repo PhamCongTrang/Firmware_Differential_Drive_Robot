@@ -16,6 +16,7 @@
 #define CA2 18
 #define CA2I 5 //Interup 2
 #define CB2 19
+#define DUTY_MAX 120
 
 float v; //linear.x (m/s) subcribe
 float omega; //angular.z(rad/s) subcribe
@@ -26,7 +27,10 @@ int cycle = 400; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -255 to 255;
-float Kp = 12, Ki = 1, Kd = 2; // PID parameter
+
+float Kp_left = 5.2, Ki_left = 0.15, Kd_left = 0; // PID parameter
+float Kp_right = 5.15, Ki_right = 0.17, Kd_right = 0.5; // PID parameter
+
 float P, I = 0, D; // Value of Proportional Integral Differential
 float L = 0.235; // distance between 2 wheel (m)
 float r_wheel = 0.05; // radian of wheel (m)
@@ -77,7 +81,7 @@ void setup()
     attachInterrupt(CA1I, encoder_counter_left, RISING); 
     attachInterrupt(CA2I, encoder_counter_right, RISING); 
 
-    //Serial.begin(9600);
+    Serial.begin(57600);
 }
 
 float measure_speed(long int cnt, long int pre_cnt)
@@ -96,7 +100,7 @@ float calculate_vleft(float v, float omega)
 * Return duty
 * Use both left & right motor
 */
-int PID(float v_set, float v_mea)
+int PID(float v_set, float v_mea, float Kp, float Ki, float Kd)
 {
    float v_err = v_set - v_mea;
    P = Kp*v_err;
@@ -144,29 +148,37 @@ void loop()
 {
     nh.spinOnce();
     delay(1);
+    // if (Serial.available() > 0) 
+    // {
+    //     Kp_left = Serial.read();
+    // }
     // v = 1;
     // omega = 0;
     //Serial.print("cnt_l, cnt_r"); Serial.print(cnt_l); Serial.print("  "); Serial.println(cnt_r);
 
     vr_set = calculate_vright(v, omega);
     vl_set = calculate_vleft(v, omega);
-    //Serial.print("vl_set, vr_set"); Serial.print(vl_set); Serial.print("  "); Serial.println(vr_set);
-
+    //Serial.print("vl_set, vr_set:"); Serial.print(vl_set); Serial.print(" "); Serial.println(vr_set);
+    //Serial.println(vl_set); Serial.println(vr_set);
     vr_mea = measure_speed(cnt_r, pre_cnt_r);
     pre_cnt_r = cnt_r;
     vl_mea = measure_speed(cnt_l, pre_cnt_l);
     pre_cnt_l = cnt_l;
-    //Serial.print("vl_mea, vr_mea"); Serial.print(vl_mea); Serial.print("  "); Serial.println(vr_mea); 
-    
-    duty_left += PID(vl_set, vl_mea);
-    duty_right += PID(vr_set, vr_mea);
+    //Serial.print("vl_mea, vr_mea:"); Serial.print(vl_mea); Serial.print(" "); Serial.println(vr_mea); 
+    Serial.print("vl_mea:");
+    Serial.print(vl_mea); 
+    Serial.print(",");
+    Serial.print("vr_mea:");
+    Serial.println(vr_mea); 
+    duty_left += PID(vl_set, vl_mea, Kp_left, Ki_left, Kd_left);
+    duty_right += PID(vr_set, vr_mea, Kp_right, Ki_right, Kd_right);
     // duty_left +=(int) 20*(vl_set - vl_mea);
     // duty_right +=(int) 20*(vr_set - vr_mea);
 
-    if (duty_left > 100) duty_left = 100;
-        if (duty_left < -100) duty_left = -100;
-    if (duty_right > 100) duty_right = 100;
-        if (duty_right < -100) duty_right = -100;
+    if (duty_left > DUTY_MAX) duty_left = DUTY_MAX;
+        if (duty_left < -DUTY_MAX) duty_left = -DUTY_MAX;
+    if (duty_right > DUTY_MAX) duty_right = DUTY_MAX;
+        if (duty_right < -DUTY_MAX) duty_right = -DUTY_MAX;
 
     //Serial.print("duty_left, duty_right"); Serial.print(duty_left); Serial.print("  "); Serial.println( duty_right);
     //Serial.print("Time calculate"); Serial.println(millis() - pret);
@@ -174,7 +186,13 @@ void loop()
 
     vBack = (vr_mea + vl_mea)/2;
     omegaBack = (vr_mea - vl_mea)/L;
-
+    Serial.print(",");
+    Serial.print("omegaBack:");
+    Serial.println(omegaBack); 
+    Serial.print(",");
+    Serial.print("vBack:");
+    Serial.println(vBack);
+     
     velBack.linear.x = vBack;
     velBack.angular.z = omegaBack;
     pubvel.publish(&velBack);
