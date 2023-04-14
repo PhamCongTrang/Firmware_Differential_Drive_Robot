@@ -4,7 +4,7 @@
 #include "Motor.h"
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
-#include <PID_v1.h>
+#include<PID_v1.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <ros/time.h>
 #include <Wire.h>
@@ -14,14 +14,14 @@ ros::NodeHandle  nh;
 
 #define LOOPTIME 10
 
-Motor right(36,34,8,19,18);
-Motor left(30,32,9,21,20);
+Motor right(34,36,8,18,19);
+Motor left(30,32,9,20,21);
 
 volatile long encoder0Pos = 0;    // encoder 1
 volatile long encoder1Pos = 0;    // encoder 2
 
-double left_kp = 4 , left_ki = 0 , left_kd = 0.0;             // modify for optimal performance
-double right_kp = 3.85 , right_ki = 0 , right_kd = 0.0;
+double left_kp = 0.5 , left_ki = 0 , left_kd = 0.0;             // modify for optimal performance
+double right_kp = 0.5 , right_ki = 0 , right_kd = 0.0;
 
 double right_input = 0, right_output = 0, right_setpoint = 0;
 PID rightPID(&right_input, &right_output, &right_setpoint, right_kp, right_ki, right_kd, DIRECT);  
@@ -49,7 +49,7 @@ float encoder1Prev;
 
 void cmd_vel_cb( const geometry_msgs::Twist& twist){
   demandx = twist.linear.x;
-  demandz = twist.angular.z*2;
+  demandz = twist.angular.z;
 }
 
 // ************** encoder 1 *********************
@@ -103,6 +103,7 @@ void change_left_b(){
     }
   }
   
+
 }
 
 // ************** encoder 2 *********************
@@ -129,6 +130,7 @@ void change_right_a(){
       encoder1Pos = encoder1Pos + 1;          // CCW
     }
   }
+ 
 }
 
 void change_right_b(){  
@@ -153,6 +155,8 @@ void change_right_b(){
       encoder1Pos = encoder1Pos + 1;          // CCW
     }
   }
+  
+
 }
 
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", cmd_vel_cb );
@@ -166,7 +170,7 @@ void setup() {
   nh.initNode();
   nh.subscribe(sub);
   nh.advertise(speed_pub);                  //prepare to publish speed in ROS topic
-  Serial.begin(57600);
+//  Serial.begin(115200);
   
   rightPID.SetMode(AUTOMATIC);
   rightPID.SetSampleTime(1);
@@ -187,9 +191,6 @@ void loop() {
   currentMillis = millis();
   if (currentMillis - prevMillis >= LOOPTIME){
     prevMillis = currentMillis;
-
-    demandx = 0.5;
-    demandz = 0.0;
 
     demand_speed_left = demandx - (demandz*0.1175);
     demand_speed_right = demandx + (demandz*0.1175);
@@ -220,18 +221,6 @@ void loop() {
     left.rotate(left_output);
     rightPID.Compute();
     right.rotate(right_output);
-    if(millis() % 2 == 0)
-    {
-      Serial.print("LEFT:");
-      Serial.print(speed_act_left);
-      Serial.print(",");
-      Serial.print("RIGHT:");
-      Serial.print(speed_act_right);
-      Serial.print(",");
-      Serial.print("OMEGA:");
-      Serial.println((speed_act_right-speed_act_left)/0.235);
-    }
-
 //    Serial.print(encoder0Pos);
 //    Serial.print(",");
 //    Serial.println(encoder1Pos);
@@ -248,7 +237,6 @@ void publishSpeed(double time) {
   speed_msg.vector.y = speed_act_right;   //right wheel speed (in m/s)
   speed_msg.vector.z = time/1000;         //looptime, should be the same as specified in LOOPTIME (in s)
   speed_pub.publish(&speed_msg);
-  
 //  nh.loginfo("Publishing odometry");
 }
 
