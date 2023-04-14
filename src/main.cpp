@@ -18,14 +18,14 @@
 #define CA2 18
 #define CA2I 5 //Interup 2
 #define CB2 19
-#define DUTY_MAX 120
+#define DUTY_MAX 200
 
 float v; //linear.x (m/s) subcribe
 float omega; //angular.z(rad/s) subcribe
 float vBack; //linear.x (m/s) publish
 float omegaBack;//angular.z(rad/s) publish
 unsigned long pret = 0; // Temp of time 
-int cycle = 400; // cycle to read encoder & calculate PID (ms)
+int cycle = 40; // cycle to read encoder & calculate PID (ms)
 float vr_set, vl_set; // Speed left & right setting (m/s)
 float vr_mea, vl_mea; // Speed left & right measuring (m/s)
 int duty_left, duty_right; // Duty of PWM pulse. Range from -255 to 255;
