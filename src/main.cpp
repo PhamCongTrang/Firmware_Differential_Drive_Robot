@@ -224,7 +224,7 @@ void loop() {
     left.rotate(left_output);
     rightPID.Compute();
     right.rotate(right_output);
-    if(millis() % 10 == 0)
+    if(millis() % 2 == 0)
     {
       Serial.print("LEFT:");
       Serial.print(speed_act_left);
