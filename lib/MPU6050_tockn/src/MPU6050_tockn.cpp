@@ -55,14 +55,14 @@ void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delay
 
   delay(delayBefore);
 	if(console){
-    Serial.println();
-    Serial.println("========================================");
-    Serial.println("Calculating gyro offsets");
-    Serial.print("DO NOT MOVE MPU6050");
+    // Serial.println();
+    // Serial.println("========================================");
+    // Serial.println("Calculating gyro offsets");
+    // Serial.print("DO NOT MOVE MPU6050");
   }
   for(int i = 0; i < 3000; i++){
     if(console && i % 1000 == 0){
-      Serial.print(".");
+      // Serial.print(".");
     }
     wire->beginTransmission(MPU6050_ADDR);
     wire->write(0x43);
@@ -82,13 +82,13 @@ void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delay
   gyroZoffset = z / 3000;
 
   if(console){
-    Serial.println();
-    Serial.println("Done!");
-    Serial.print("X : ");Serial.println(gyroXoffset);
-    Serial.print("Y : ");Serial.println(gyroYoffset);
-    Serial.print("Z : ");Serial.println(gyroZoffset);
-    Serial.println("Program will start after 3 seconds");
-    Serial.print("========================================");
+    // Serial.println();
+    // Serial.println("Done!");
+    // Serial.print("X : ");Serial.println(gyroXoffset);
+    // Serial.print("Y : ");Serial.println(gyroYoffset);
+    // Serial.print("Z : ");Serial.println(gyroZoffset);
+    // Serial.println("Program will start after 3 seconds");
+    // Serial.print("========================================");
 		delay(delayAfter);
 	}
 }
