@@ -16,7 +16,7 @@ ros::NodeHandle  nh;
 #define LOOPTIME 10
 #define wheel_radius 0.05
 #define L 0.235
-#define pulse_per_rev 330
+#define pulse_per_rev 1232
 //#define ticks_per_metter 10.51
 
 Motor right(36,34,8,19,18);
@@ -211,7 +211,7 @@ void loop() {
     encoder0Diff = encoder0Pos - encoder0Prev; // Get difference between ticks to compute speed
     encoder1Diff = encoder1Pos - encoder1Prev;
     
-    int ticks_per_metter =  (int)(pulse_per_rev * LOOPTIME /(2*M_PI*wheel_radius*1000)); //ticks_per_metter in LOOPTIME ms
+    float ticks_per_metter =  (pulse_per_rev * LOOPTIME /(2*M_PI*wheel_radius*1000)); //ticks_per_metter in LOOPTIME ms
     speed_act_left = encoder0Diff/ticks_per_metter;                    
     speed_act_right = encoder1Diff/ticks_per_metter; 
   
@@ -233,17 +233,11 @@ void loop() {
     right.rotate(right_output);
     if(millis() % 10 == 0)
     {
-      Serial.print("LEFT:");
-      Serial.print(speed_act_left);
-      Serial.print(",");
-      Serial.print("RIGHT:");
-      Serial.print(speed_act_right);
-      Serial.print(",");
-      Serial.print("OMEGA:");
-      Serial.print((speed_act_right-speed_act_left)/0.235);
-      Serial.print(",");
-      Serial.print("OMEGAGRYSCOPE:");
-      Serial.println(mpu6050.getGyroZ()/180*3.14);
+      Serial.print("PULSE:");Serial.print(encoder0Pos);Serial.print(",");
+      Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
+      Serial.print("RIGHT:");Serial.print(speed_act_right);Serial.print(",");
+      Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
+      Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*3.14);
 
       // Gia toc dai do bang acc
       // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
