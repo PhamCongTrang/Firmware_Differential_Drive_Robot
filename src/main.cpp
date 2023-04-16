@@ -210,17 +210,17 @@ void loop() {
     encoder0Diff = encoder0Pos - encoder0Prev; // Get difference between ticks to compute speed
     encoder1Diff = encoder1Pos - encoder1Prev;
     
-    speed_act_left = encoder0Diff/39.65;                    
-    speed_act_right = encoder1Diff/39.65; 
+    speed_act_left = encoder0Diff/10.51;                    
+    speed_act_right = encoder1Diff/10.51; 
   
-    encoder0Error = (demand_speed_left*39.65)-encoder0Diff; // 3965 ticks in 1m = 39.65 ticks in 10ms, due to the 10 millis loop
-    encoder1Error = (demand_speed_right*39.65)-encoder1Diff;
+    encoder0Error = (demand_speed_left*10.51)-encoder0Diff; // 3965 ticks in 1m = 10.51 ticks in 10ms, due to the 10 millis loop
+    encoder1Error = (demand_speed_right*10.51)-encoder1Diff;
   
     encoder0Prev = encoder0Pos; // Saving values
     encoder1Prev = encoder1Pos;
   
-    left_setpoint = demand_speed_left*39.65;  //Setting required speed as a mul/frac of 1 m/s
-    right_setpoint = demand_speed_right*39.65;
+    left_setpoint = demand_speed_left*10.51;  //Setting required speed as a mul/frac of 1 m/s
+    right_setpoint = demand_speed_right*10.51;
   
     left_input = encoder0Diff;  //Input to PID controller is the current difference
     right_input = encoder1Diff;
