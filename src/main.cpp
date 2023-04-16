@@ -196,8 +196,8 @@ void loop() {
     if (currentMillis - prevMillis >= LOOPTIME){
         prevMillis = currentMillis;
 
-    demandx = 0.5;
-    demandz = 3.14/2;
+    demandx = 0;
+    demandz = 3.14;
 
     demand_speed_left = demandx - (demandz*0.1175);
     demand_speed_right = demandx + (demandz*0.1175);
