@@ -197,7 +197,7 @@ void loop() {
         prevMillis = currentMillis;
 
     demandx = 0.5;
-    demandz = 0.0;
+    demandz = 3.14/2;
 
     demand_speed_left = demandx - (demandz*0.1175);
     demand_speed_right = demandx + (demandz*0.1175);
@@ -240,7 +240,7 @@ void loop() {
       Serial.print((speed_act_right-speed_act_left)/0.235);
       Serial.print(",");
       Serial.print("OMEGAGRYSCOPE:");
-      Serial.println(mpu6050.getAngleZ());
+      Serial.println(mpu6050.getGyroZ()/180*3.14);
 
       // Gia toc dai do bang acc
       // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
