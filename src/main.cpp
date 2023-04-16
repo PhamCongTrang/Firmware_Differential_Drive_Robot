@@ -199,7 +199,7 @@ void loop() {
         prevMillis = currentMillis;
 
     demandx = 0;
-    demandz = 3.14;
+    demandz = 0;
 
     demand_speed_left = demandx - (demandz*0.1175);
     demand_speed_right = demandx + (demandz*0.1175);
