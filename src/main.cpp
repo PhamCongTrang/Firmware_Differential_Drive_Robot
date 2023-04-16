@@ -7,6 +7,7 @@
 #include<PID_v1.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <ros/time.h>
+#include <MPU6050_tockn.h>
 #include <Wire.h>
 
 
