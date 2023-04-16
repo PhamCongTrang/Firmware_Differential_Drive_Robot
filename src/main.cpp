@@ -17,6 +17,7 @@ MPU6050 mpu6050(Wire);
 ros::NodeHandle  nh;
 
 #define LOOPTIME 10
+#define ticks_per_metter 10.51
 
 Motor right(36,34,8,19,18);
 // Motor left(30,32,9,21,20);
@@ -210,17 +211,17 @@ void loop() {
     encoder0Diff = encoder0Pos - encoder0Prev; // Get difference between ticks to compute speed
     encoder1Diff = encoder1Pos - encoder1Prev;
     
-    speed_act_left = encoder0Diff/10.51;                    
-    speed_act_right = encoder1Diff/10.51; 
+    speed_act_left = encoder0Diff/ticks_per_metter;                    
+    speed_act_right = encoder1Diff/ticks_per_metter; 
   
-    encoder0Error = (demand_speed_left*10.51)-encoder0Diff; // 3965 ticks in 1m = 10.51 ticks in 10ms, due to the 10 millis loop
-    encoder1Error = (demand_speed_right*10.51)-encoder1Diff;
+    encoder0Error = (demand_speed_left*ticks_per_metter)-encoder0Diff; // 3965 ticks in 1m = 10.51 ticks in 10ms, due to the 10 millis loop
+    encoder1Error = (demand_speed_right*ticks_per_metter)-encoder1Diff;
   
     encoder0Prev = encoder0Pos; // Saving values
     encoder1Prev = encoder1Pos;
   
-    left_setpoint = demand_speed_left*10.51;  //Setting required speed as a mul/frac of 1 m/s
-    right_setpoint = demand_speed_right*10.51;
+    left_setpoint = demand_speed_left*ticks_per_metter;  //Setting required speed as a mul/frac of 1 m/s
+    right_setpoint = demand_speed_right*ticks_per_metter;
   
     left_input = encoder0Diff;  //Input to PID controller is the current difference
     right_input = encoder1Diff;
