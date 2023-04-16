@@ -22,14 +22,14 @@ void Motor::rotate(int value) {
     //(12/16)*255 ~=190
 //    Serial.println("called");
 //    Serial.println(plus);
-    int out = map(value, 0, 100, 0, 100);
+    int out = map(value, 0, 100, 0, 200);
     analogWrite(pwm, out);
     digitalWrite(plus, HIGH);
     digitalWrite(minus, LOW);
   }else{
     //Max Voltage with 16V battery with 12V required
     //(12/16)*255 ~=190
-    int out = map(value, 0, -100, 0, 100);
+    int out = map(value, 0, -100, 0, 200);
     analogWrite(pwm, out);
     digitalWrite(plus, LOW);
     digitalWrite(minus, HIGH);

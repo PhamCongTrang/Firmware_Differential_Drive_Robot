@@ -1,22 +1,26 @@
 //AGV Machine - Vinay Lanka
 
 //Import Motor - Cytron SPG30E-30K
-#include "Motor.h"
+#include <Motor.h>
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
-#include<PID_v1.h>
+#include <PID_v1.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <ros/time.h>
 #include <MPU6050_tockn.h>
 #include <Wire.h>
+#include <MPU6050_tockn.h>
+#include <Wire.h>
 
+MPU6050 mpu6050(Wire);
 
 ros::NodeHandle  nh;
 
 #define LOOPTIME 10
 
 Motor right(36,34,8,19,18);
-Motor left(30,32,9,21,20);
+// Motor left(30,32,9,21,20);
+Motor left(30,32,9,2,3);
 
 volatile long encoder0Pos = 0;    // encoder 1
 volatile long encoder1Pos = 0;    // encoder 2
@@ -104,7 +108,6 @@ void change_left_b(){
     }
   }
   
-
 }
 
 // ************** encoder 2 *********************
@@ -131,7 +134,6 @@ void change_right_a(){
       encoder1Pos = encoder1Pos + 1;          // CCW
     }
   }
- 
 }
 
 void change_right_b(){  
@@ -156,8 +158,6 @@ void change_right_b(){
       encoder1Pos = encoder1Pos + 1;          // CCW
     }
   }
-  
-
 }
 
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", cmd_vel_cb );
@@ -186,12 +186,16 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(left.en_b),change_left_b, CHANGE);
   attachInterrupt(digitalPinToInterrupt(right.en_a),change_right_a, CHANGE);
   attachInterrupt(digitalPinToInterrupt(right.en_b),change_right_b, CHANGE);
+  Wire.begin();
+  mpu6050.begin();
+  mpu6050.calcGyroOffsets(true);
 }
 
 void loop() {
-  currentMillis = millis();
-  if (currentMillis - prevMillis >= LOOPTIME){
-    prevMillis = currentMillis;
+    mpu6050.update();
+    currentMillis = millis();
+    if (currentMillis - prevMillis >= LOOPTIME){
+        prevMillis = currentMillis;
 
     demandx = 0.5;
     demandz = 0.0;
@@ -225,7 +229,7 @@ void loop() {
     left.rotate(left_output);
     rightPID.Compute();
     right.rotate(right_output);
-    if(millis() % 2 == 0)
+    if(millis() % 10 == 0)
     {
       Serial.print("LEFT:");
       Serial.print(speed_act_left);
@@ -234,15 +238,39 @@ void loop() {
       Serial.print(speed_act_right);
       Serial.print(",");
       Serial.print("OMEGA:");
-      Serial.println((speed_act_right-speed_act_left)/0.235);
+      Serial.print((speed_act_right-speed_act_left)/0.235);
+      Serial.print(",");
+      Serial.print("OMEGAGRYSCOPE:");
+      Serial.println(mpu6050.getAngleZ());
+
+      // Gia toc dai do bang acc
+      // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
+      // Serial.print("accY:");Serial.print(mpu6050.getAccY());Serial.print(",");
+      // Serial.print("accZ:");Serial.println(mpu6050.getAccZ());
+      // Van toc goc do bang gyro
+      // Serial.print("gyroX:");Serial.print(mpu6050.getGyroX());Serial.print(",");
+      // Serial.print("gyroY:");Serial.print(mpu6050.getGyroY());Serial.print(",");
+      // Serial.print("gyroZ:");Serial.println(mpu6050.getGyroZ());
+      // Goc lech truc so voi trong luc, do bang acc
+      // Serial.print("accAngleX:");Serial.print(mpu6050.getAccAngleX());Serial.print(",");
+      // Serial.print("accAngleY:");Serial.println(mpu6050.getAccAngleY());
+      // Goc lech so voi phuong ban dau - co tich luy, do bang gry
+      // Serial.print("gyroAngleX:");Serial.print(mpu6050.getGyroAngleX());Serial.print(",");
+      // Serial.print("gyroAngleY:");Serial.print(mpu6050.getGyroAngleY());Serial.print(",");
+      // Serial.print("gyroAngleZ:");Serial.println(mpu6050.getGyroAngleZ());
+      // Goc lech so voi phuong ban dau co tich luy, acc + gyro
+      // Serial.print("angleX:");Serial.print(mpu6050.getAngleX());Serial.print(",");
+      // Serial.print("angleY:");Serial.print(mpu6050.getAngleY());Serial.print(",");
+      // Serial.print("angleZ:");Serial.println(mpu6050.getAngleZ());
+      
     }
 
 //    Serial.print(encoder0Pos);
 //    Serial.print(",");
 //    Serial.println(encoder1Pos);
   }
-  publishSpeed(LOOPTIME);
-  nh.spinOnce();
+  // publishSpeed(LOOPTIME);
+  // nh.spinOnce();
 }
 
 
