@@ -1,6 +1,3 @@
-//AGV Machine - Vinay Lanka
-
-//Import Motor - Cytron SPG30E-30K
 #include <Motor.h>
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
@@ -17,7 +14,10 @@ MPU6050 mpu6050(Wire);
 ros::NodeHandle  nh;
 
 #define LOOPTIME 10
-#define ticks_per_metter 10.51
+#define wheel_radius 0.05
+#define L 0.235
+#define pulse_per_rev 330
+//#define ticks_per_metter 10.51
 
 Motor right(36,34,8,19,18);
 // Motor left(30,32,9,21,20);
@@ -201,8 +201,8 @@ void loop() {
     demandx = 0.5;
     demandz = 3.14/2;
 
-    demand_speed_left = demandx - (demandz*0.1175);
-    demand_speed_right = demandx + (demandz*0.1175);
+    demand_speed_left = demandx - (demandz*L/2);
+    demand_speed_right = demandx + (demandz*L/2);
   
     /*PID controller for speed control
       Base speed being 1 ms and the demand_speed variables controlling it at fractions of the base.
@@ -211,10 +211,11 @@ void loop() {
     encoder0Diff = encoder0Pos - encoder0Prev; // Get difference between ticks to compute speed
     encoder1Diff = encoder1Pos - encoder1Prev;
     
+    int ticks_per_metter =  (int)(pulse_per_rev * LOOPTIME /(2*M_PI*wheel_radius*1000)); //ticks_per_metter in LOOPTIME ms
     speed_act_left = encoder0Diff/ticks_per_metter;                    
     speed_act_right = encoder1Diff/ticks_per_metter; 
   
-    encoder0Error = (demand_speed_left*ticks_per_metter)-encoder0Diff; // 3965 ticks in 1m = 10.51 ticks in 10ms, due to the 10 millis loop
+    encoder0Error = (demand_speed_left*ticks_per_metter)-encoder0Diff; 
     encoder1Error = (demand_speed_right*ticks_per_metter)-encoder1Diff;
   
     encoder0Prev = encoder0Pos; // Saving values
@@ -287,4 +288,4 @@ void publishSpeed(double time) {
 }
 
 
-// ************** encoders interrupts **************
+
