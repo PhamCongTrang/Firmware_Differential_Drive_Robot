@@ -202,9 +202,12 @@ void setup() {
 
 void loop() {
     mpu6050.update();
+    static unsigned long prev_control_time = 0;
+    static unsigned long prev_control_time = 0;
+    static unsigned long prev_imu_time = 0;
     currentMillis = millis();
     if (currentMillis - prevMillis >= LOOPTIME){
-    prevMillis = currentMillis;
+    
 
     demandx = 0;
     demandz = 0;
@@ -271,6 +274,7 @@ void loop() {
 // //    Serial.print(encoder0Pos);
 // //    Serial.print(",");
 // //    Serial.println(encoder1Pos);
+      prevMillis = currentMillis;
    }
    publishSpeed();
    publishImu();
