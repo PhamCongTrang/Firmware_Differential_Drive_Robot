@@ -12,9 +12,7 @@
 
 SimpleKalmanFilter Encoder_Filter(2, 2, 0.001);
 
-
-
-#define LOOPTIME 10
+#define LOOPTIME 40
 #define wheel_radius 0.05
 #define L 0.235
 #define pulse_per_rev 1232
@@ -204,19 +202,20 @@ void setup() {
   mpu6050.calcGyroOffsets(true);
 }
 
-void loop() {
-    mpu6050.update();
-    currentMillis = millis();
-    if (currentMillis - prevMillis >= LOOPTIME){
+void loop() 
+{
+  mpu6050.update();
+  currentMillis = millis();
+  if (currentMillis - prevMillis >= LOOPTIME)
+  {
     prevMillis = currentMillis;
-    }
 
     demandx = 0.3;
     demandz = 0.5;
 
     demand_speed_left = demandx - (demandz*L/2);
     demand_speed_right = demandx + (demandz*L/2);
-  
+
     /*PID*/
     encoder0Diff = encoder0Pos - encoder0Prev; // Get difference between ticks to compute speed
     encoder1Diff = encoder1Pos - encoder1Prev;
@@ -224,16 +223,16 @@ void loop() {
     float ticks_per_metter =  (pulse_per_rev * LOOPTIME /(2*M_PI*wheel_radius*1000)); //ticks_per_metter in LOOPTIME ms
     speed_act_left = encoder0Diff/ticks_per_metter;                    
     speed_act_right = encoder1Diff/ticks_per_metter; 
-  
+
     encoder0Error = (demand_speed_left*ticks_per_metter)-encoder0Diff; 
     encoder1Error = (demand_speed_right*ticks_per_metter)-encoder1Diff;
-  
+
     encoder0Prev = encoder0Pos; // Saving values
     encoder1Prev = encoder1Pos;
-  
+
     left_setpoint = demand_speed_left*ticks_per_metter;  //Setting required speed as a mul/frac of 1 m/s
     right_setpoint = demand_speed_right*ticks_per_metter;
-  
+
     left_input = encoder0Diff;  //Input to PID controller is the current difference
     right_input = encoder1Diff;
     
@@ -241,7 +240,7 @@ void loop() {
     left.rotate(left_output);
     rightPID.Compute();
     right.rotate(right_output);
-    if(millis() % 10 == 0)
+    if(10 % 10 == 0)
     {
       Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
       // speed_act_left_filter = Encoder_Filter.updateEstimate(speed_act_left);
@@ -250,46 +249,39 @@ void loop() {
       Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
       Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*M_PI);
 
-    /*DEBUG*/
-//     if(millis() % 10 == 0)
-//     {
-//       Serial.print("PULSE:");Serial.print(encoder0Pos);Serial.print(",");
-//       Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
-//       Serial.print("RIGHT:");Serial.print(speed_act_right);Serial.print(",");
-//       Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
-//       Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*3.14);
+      // Serial.print("PULSE:");Serial.print(encoder0Pos);Serial.print(",");
+      // Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
+      // Serial.print("RIGHT:");Serial.print(speed_act_right);Serial.print(",");
+      // Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
+      // Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*3.14);
 
-//       // Gia toc dai do bang acc
-//       // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
-//       // Serial.print("accY:");Serial.print(mpu6050.getAccY());Serial.print(",");
-//       // Serial.print("accZ:");Serial.println(mpu6050.getAccZ());
-//       // Van toc goc do bang gyro
-//       // Serial.print("gyroX:");Serial.print(mpu6050.getGyroX());Serial.print(",");
-//       // Serial.print("gyroY:");Serial.print(mpu6050.getGyroY());Serial.print(",");
-//       // Serial.print("gyroZ:");Serial.println(mpu6050.getGyroZ());
-//       // Goc lech truc so voi trong luc, do bang acc
-//       // Serial.print("accAngleX:");Serial.print(mpu6050.getAccAngleX());Serial.print(",");
-//       // Serial.print("accAngleY:");Serial.println(mpu6050.getAccAngleY());
-//       // Goc lech so voi phuong ban dau - co tich luy, do bang gry
-//       // Serial.print("gyroAngleX:");Serial.print(mpu6050.getGyroAngleX());Serial.print(",");
-//       // Serial.print("gyroAngleY:");Serial.print(mpu6050.getGyroAngleY());Serial.print(",");
-//       // Serial.print("gyroAngleZ:");Serial.println(mpu6050.getGyroAngleZ());
-//       // Goc lech so voi phuong ban dau co tich luy, acc + gyro
-//       // Serial.print("angleX:");Serial.print(mpu6050.getAngleX());Serial.print(",");
-//       // Serial.print("angleY:");Serial.print(mpu6050.getAngleY());Serial.print(",");
-//       // Serial.print("angleZ:");Serial.println(mpu6050.getAngleZ());
+      // Gia toc dai do bang acc
+      // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
+      // Serial.print("accY:");Serial.print(mpu6050.getAccY());Serial.print(",");
+      // Serial.print("accZ:");Serial.println(mpu6050.getAccZ());
+      // Van toc goc do bang gyro
+      // Serial.print("gyroX:");Serial.print(mpu6050.getGyroX());Serial.print(",");
+      // Serial.print("gyroY:");Serial.print(mpu6050.getGyroY());Serial.print(",");
+      // Serial.print("gyroZ:");Serial.println(mpu6050.getGyroZ());
+      // Goc lech truc so voi trong luc, do bang acc
+      // Serial.print("accAngleX:");Serial.print(mpu6050.getAccAngleX());Serial.print(",");
+      // Serial.print("accAngleY:");Serial.println(mpu6050.getAccAngleY());
+      // Goc lech so voi phuong ban dau - co tich luy, do bang gry
+      // Serial.print("gyroAngleX:");Serial.print(mpu6050.getGyroAngleX());Serial.print(",");
+      // Serial.print("gyroAngleY:");Serial.print(mpu6050.getGyroAngleY());Serial.print(",");
+      // Serial.print("gyroAngleZ:");Serial.println(mpu6050.getGyroAngleZ());
+      // Goc lech so voi phuong ban dau co tich luy, acc + gyro
+      // Serial.print("angleX:");Serial.print(mpu6050.getAngleX());Serial.print(",");
+      // Serial.print("angleY:");Serial.print(mpu6050.getAngleY());Serial.print(",");
+      // Serial.print("angleZ:");Serial.println(mpu6050.getAngleZ());
       
-//       }
-
-// //    Serial.print(encoder0Pos);
-// //    Serial.print(",");
-// //    Serial.println(encoder1Pos);
-        }
-   publishSpeed();
-   publishImu();
-   nh.spinOnce();
+    }
+    
+  }
+  publishSpeed();
+  publishImu();
+  nh.spinOnce();
 }
-
 
 //Publish function for odometry, uses a vector type message to send the data (message type is not meant for that but that's easier than creating a specific message type)
 void publishSpeed() {
@@ -311,12 +303,11 @@ void publishImu(){
   t.header.stamp = nh.now();
   broadcaster.sendTransform(t);
 
-  
   imu_msg.header.frame_id = "imu_link";
   imu_msg.header.stamp =nh.now();
-  imu_msg.angular_velocity.x = mpu6050.getGyroX()*3.14/180; //(radian/s)
-  imu_msg.angular_velocity.y = mpu6050.getGyroY()*3.14/180; //(radian/s)
-  imu_msg.angular_velocity.z = mpu6050.getGyroZ()*3.14/180; //(radian/s)
+  imu_msg.angular_velocity.x = mpu6050.getGyroX()*M_PI/180; //(radian/s)
+  imu_msg.angular_velocity.y = mpu6050.getGyroY()*M_PI/180; //(radian/s)
+  imu_msg.angular_velocity.z = mpu6050.getGyroZ()*M_PI/180; //(radian/s)
 
   imu_msg.linear_acceleration.x = mpu6050.getAccX()*9.81; //(m/s^2)
   imu_msg.linear_acceleration.y = mpu6050.getAccY()*9.81; //(m/s^2)
