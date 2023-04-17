@@ -8,6 +8,9 @@
 #include <Wire.h>
 #include <MPU6050_tockn.h>
 #include <Wire.h>
+#include <SimpleKalmanFilter.h>
+
+SimpleKalmanFilter Encoder_Filter(2, 2, 0.001);
 
 MPU6050 mpu6050(Wire);
 
@@ -167,6 +170,7 @@ ros::Publisher speed_pub("speed", &speed_msg);                          //create
 
 double speed_act_left = 0;                    //Actual speed for left wheel in m/s
 double speed_act_right = 0;                    //Command speed for left wheel in m/s 
+double speed_act_left_filter = 0;
 
 void setup() {
   nh.initNode();
@@ -198,8 +202,8 @@ void loop() {
     if (currentMillis - prevMillis >= LOOPTIME){
         prevMillis = currentMillis;
 
-    demandx = 0;
-    demandz = 0;
+    demandx = 0.3;
+    demandz = 0.5;
 
     demand_speed_left = demandx - (demandz*L/2);
     demand_speed_right = demandx + (demandz*L/2);
@@ -233,11 +237,12 @@ void loop() {
     right.rotate(right_output);
     if(millis() % 10 == 0)
     {
-      Serial.print("PULSE:");Serial.print(encoder0Pos);Serial.print(",");
       Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
+      // speed_act_left_filter = Encoder_Filter.updateEstimate(speed_act_left);
+      // Serial.print("LEFT KALMANN:");Serial.println(speed_act_left_filter);
       Serial.print("RIGHT:");Serial.print(speed_act_right);Serial.print(",");
       Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
-      Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*3.14);
+      Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*M_PI);
 
       // Gia toc dai do bang acc
       // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
@@ -260,7 +265,6 @@ void loop() {
       // Serial.print("angleZ:");Serial.println(mpu6050.getAngleZ());
       
     }
-
 //    Serial.print(encoder0Pos);
 //    Serial.print(",");
 //    Serial.println(encoder1Pos);
