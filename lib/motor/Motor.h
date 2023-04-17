@@ -11,7 +11,9 @@ void change_right_b();
 void change_right_a();
 void change_left_a();
 void change_left_b();
-void publishSpeed(double time);
+void publishSpeed();
+void publishImu();
+
 class Motor {
   public:
     //Constructor - Plus and Minus are the Motor output / en_a and en_b are the encoder inputs
