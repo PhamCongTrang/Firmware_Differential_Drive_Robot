@@ -8,10 +8,11 @@
 #include <ros/time.h>
 #include <MPU6050_tockn.h>
 #include <Wire.h>
+#include <SimpleKalmanFilter.h>
 
+SimpleKalmanFilter Encoder_Filter(2, 2, 0.001);
 
-
-#define LOOPTIME 10
+#define LOOPTIME 50
 #define wheel_radius 0.05
 #define L 0.235
 #define pulse_per_rev 1232
@@ -40,8 +41,6 @@ float demandz=0;
 double demand_speed_left;
 double demand_speed_right;
 
-unsigned long currentMillis;
-unsigned long prevMillis;
 
 float encoder0Diff;
 float encoder1Diff;
@@ -174,6 +173,7 @@ static tf::TransformBroadcaster broadcaster;
 
 double speed_act_left = 0;                    //Actual speed for left wheel in m/s
 double speed_act_right = 0;                    //Command speed for left wheel in m/s 
+double speed_act_left_filter = 0;
 
 void setup() {
   nh.initNode();
@@ -199,97 +199,7 @@ void setup() {
   mpu6050.begin();
   mpu6050.calcGyroOffsets(true);
 }
-
-void loop() {
-    mpu6050.update();
-    static unsigned long prev_control_time = 0;
-    static unsigned long prev_control_time = 0;
-    static unsigned long prev_imu_time = 0;
-    currentMillis = millis();
-    if (currentMillis - prevMillis >= LOOPTIME){
-    
-
-    demandx = 0;
-    demandz = 0;
-
-    demand_speed_left = demandx - (demandz*L/2);
-    demand_speed_right = demandx + (demandz*L/2);
-  
-    /*PID*/
-    encoder0Diff = encoder0Pos - encoder0Prev; // Get difference between ticks to compute speed
-    encoder1Diff = encoder1Pos - encoder1Prev;
-    
-    float ticks_per_metter =  (pulse_per_rev * LOOPTIME /(2*M_PI*wheel_radius*1000)); //ticks_per_metter in LOOPTIME ms
-    speed_act_left = encoder0Diff/ticks_per_metter;                    
-    speed_act_right = encoder1Diff/ticks_per_metter; 
-  
-    encoder0Error = (demand_speed_left*ticks_per_metter)-encoder0Diff; 
-    encoder1Error = (demand_speed_right*ticks_per_metter)-encoder1Diff;
-  
-    encoder0Prev = encoder0Pos; // Saving values
-    encoder1Prev = encoder1Pos;
-  
-    left_setpoint = demand_speed_left*ticks_per_metter;  //Setting required speed as a mul/frac of 1 m/s
-    right_setpoint = demand_speed_right*ticks_per_metter;
-  
-    left_input = encoder0Diff;  //Input to PID controller is the current difference
-    right_input = encoder1Diff;
-    
-    leftPID.Compute();
-    left.rotate(left_output);
-    rightPID.Compute();
-    right.rotate(right_output);
-
-    /*DEBUG*/
-//     if(millis() % 10 == 0)
-//     {
-//       Serial.print("PULSE:");Serial.print(encoder0Pos);Serial.print(",");
-//       Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
-//       Serial.print("RIGHT:");Serial.print(speed_act_right);Serial.print(",");
-//       Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
-//       Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*3.14);
-
-//       // Gia toc dai do bang acc
-//       // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
-//       // Serial.print("accY:");Serial.print(mpu6050.getAccY());Serial.print(",");
-//       // Serial.print("accZ:");Serial.println(mpu6050.getAccZ());
-//       // Van toc goc do bang gyro
-//       // Serial.print("gyroX:");Serial.print(mpu6050.getGyroX());Serial.print(",");
-//       // Serial.print("gyroY:");Serial.print(mpu6050.getGyroY());Serial.print(",");
-//       // Serial.print("gyroZ:");Serial.println(mpu6050.getGyroZ());
-//       // Goc lech truc so voi trong luc, do bang acc
-//       // Serial.print("accAngleX:");Serial.print(mpu6050.getAccAngleX());Serial.print(",");
-//       // Serial.print("accAngleY:");Serial.println(mpu6050.getAccAngleY());
-//       // Goc lech so voi phuong ban dau - co tich luy, do bang gry
-//       // Serial.print("gyroAngleX:");Serial.print(mpu6050.getGyroAngleX());Serial.print(",");
-//       // Serial.print("gyroAngleY:");Serial.print(mpu6050.getGyroAngleY());Serial.print(",");
-//       // Serial.print("gyroAngleZ:");Serial.println(mpu6050.getGyroAngleZ());
-//       // Goc lech so voi phuong ban dau co tich luy, acc + gyro
-//       // Serial.print("angleX:");Serial.print(mpu6050.getAngleX());Serial.print(",");
-//       // Serial.print("angleY:");Serial.print(mpu6050.getAngleY());Serial.print(",");
-//       // Serial.print("angleZ:");Serial.println(mpu6050.getAngleZ());
-      
-//       }
-
-// //    Serial.print(encoder0Pos);
-// //    Serial.print(",");
-// //    Serial.println(encoder1Pos);
-      prevMillis = currentMillis;
-   }
-   publishSpeed();
-   publishImu();
-   nh.spinOnce();
-}
-
-
-//Publish function for odometry, uses a vector type message to send the data (message type is not meant for that but that's easier than creating a specific message type)
-void publishSpeed() {
-  speed_msg.linear.x = (speed_act_left + speed_act_right) / 2;
-  speed_msg.angular.z = (speed_act_right - speed_act_left) / L;
-  speed_pub.publish(&speed_msg);
-}
-
-void publishImu(){
+void pubishTf(){
   t.header.frame_id = "base_link";
   t.child_frame_id = "imu_link";
   t.transform.translation.x = 0;
@@ -301,13 +211,116 @@ void publishImu(){
   t.transform.rotation.w = 1.0;
   t.header.stamp = nh.now();
   broadcaster.sendTransform(t);
+}
+void loop() 
+{
+  mpu6050.update();
+  static unsigned long prev_control_time = 0;
+  static unsigned long prev_encoder_time = 0;
+  static unsigned long prev_imu_time = 0;
+  static unsigned long prev_tf_time = 0;
 
+  if (millis() - prev_control_time >= LOOPTIME)
+  {
+    demandx = 0.3;
+    demandz = 0.5;
+
+    demand_speed_left = demandx - (demandz*L/2);
+    demand_speed_right = demandx + (demandz*L/2);
+
+    /*PID*/
+    encoder0Diff = encoder0Pos - encoder0Prev; // Get difference between ticks to compute speed
+    encoder1Diff = encoder1Pos - encoder1Prev;
+    
+    double ticks_per_metter = (double) (pulse_per_rev * LOOPTIME /(2*M_PI*wheel_radius*1000)); //ticks_per_metter in LOOPTIME ms
+    speed_act_left = encoder0Diff/ticks_per_metter;                    
+    speed_act_right = encoder1Diff/ticks_per_metter; 
+
+    encoder0Error = (demand_speed_left*ticks_per_metter)-encoder0Diff; 
+    encoder1Error = (demand_speed_right*ticks_per_metter)-encoder1Diff;
+
+    encoder0Prev = encoder0Pos; // Saving values
+    encoder1Prev = encoder1Pos;
+
+    left_setpoint = demand_speed_left*ticks_per_metter;  //Setting required speed as a mul/frac of 1 m/s
+    right_setpoint = demand_speed_right*ticks_per_metter;
+
+    left_input = encoder0Diff;  //Input to PID controller is the current difference
+    right_input = encoder1Diff;
+    
+    leftPID.Compute();
+    left.rotate(left_output);
+    rightPID.Compute();
+    right.rotate(right_output);
+    
+    // if(10 % 10 == 0)
+    // {
+    //   Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
+    //   // speed_act_left_filter = Encoder_Filter.updateEstimate(speed_act_left);
+    //   // Serial.print("LEFT KALMANN:");Serial.println(speed_act_left_filter);
+    //   Serial.print("RIGHT:");Serial.print(speed_act_right);Serial.print(",");
+    //   Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
+    //   Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*M_PI);
+
+      // Serial.print("PULSE:");Serial.print(encoder0Pos);Serial.print(",");
+      // Serial.print("LEFT:");Serial.print(speed_act_left);Serial.print(",");
+      // Serial.print("RIGHT:");Serial.print(speed_act_right);Serial.print(",");
+      // Serial.print("OMEGA:");Serial.print((speed_act_right-speed_act_left)/L);Serial.print(",");
+      // Serial.print("OMEGAGRYSCOPE:");Serial.println(mpu6050.getGyroZ()/180*3.14);
+
+      // Gia toc dai do bang acc
+      // Serial.print("accX:");Serial.print(mpu6050.getAccX());Serial.print(",");
+      // Serial.print("accY:");Serial.print(mpu6050.getAccY());Serial.print(",");
+      // Serial.print("accZ:");Serial.println(mpu6050.getAccZ());
+      // Van toc goc do bang gyro
+      // Serial.print("gyroX:");Serial.print(mpu6050.getGyroX());Serial.print(",");
+      // Serial.print("gyroY:");Serial.print(mpu6050.getGyroY());Serial.print(",");
+      // Serial.print("gyroZ:");Serial.println(mpu6050.getGyroZ());
+      // Goc lech truc so voi trong luc, do bang acc
+      // Serial.print("accAngleX:");Serial.print(mpu6050.getAccAngleX());Serial.print(",");
+      // Serial.print("accAngleY:");Serial.println(mpu6050.getAccAngleY());
+      // Goc lech so voi phuong ban dau - co tich luy, do bang gry
+      // Serial.print("gyroAngleX:");Serial.print(mpu6050.getGyroAngleX());Serial.print(",");
+      // Serial.print("gyroAngleY:");Serial.print(mpu6050.getGyroAngleY());Serial.print(",");
+      // Serial.print("gyroAngleZ:");Serial.println(mpu6050.getGyroAngleZ());
+      // Goc lech so voi phuong ban dau co tich luy, acc + gyro
+      // Serial.print("angleX:");Serial.print(mpu6050.getAngleX());Serial.print(",");
+      // Serial.print("angleY:");Serial.print(mpu6050.getAngleY());Serial.print(",");
+      // Serial.print("angleZ:");Serial.println(mpu6050.getAngleZ());
+      
+    //}
+    prev_control_time = millis();
+  }
+  if(millis()-prev_encoder_time >= LOOPTIME){
+    publishSpeed();
+    prev_encoder_time = millis();
+  }
+  if(millis() - prev_imu_time >= LOOPTIME){
+    publishImu();
+    prev_imu_time = millis();
+  }
+  // if(millis() - prev_tf_time >= LOOPTIME){
+  //   publishTf();
+  //   prev_tf_time = millis();
+  // }
   
+  nh.spinOnce();
+}
+
+//Publish function for odometry, uses a vector type message to send the data (message type is not meant for that but that's easier than creating a specific message type)
+void publishSpeed() {
+  speed_msg.linear.x = (speed_act_left + speed_act_right) / 2;
+  speed_msg.angular.z = (speed_act_right - speed_act_left) / L;
+  speed_pub.publish(&speed_msg);
+}
+
+void publishImu(){
+
   imu_msg.header.frame_id = "imu_link";
   imu_msg.header.stamp =nh.now();
-  imu_msg.angular_velocity.x = mpu6050.getGyroX()*3.14/180; //(radian/s)
-  imu_msg.angular_velocity.y = mpu6050.getGyroY()*3.14/180; //(radian/s)
-  imu_msg.angular_velocity.z = mpu6050.getGyroZ()*3.14/180; //(radian/s)
+  imu_msg.angular_velocity.x = mpu6050.getGyroX()*M_PI/180; //(radian/s)
+  imu_msg.angular_velocity.y = mpu6050.getGyroY()*M_PI/180; //(radian/s)
+  imu_msg.angular_velocity.z = mpu6050.getGyroZ()*M_PI/180; //(radian/s)
 
   imu_msg.linear_acceleration.x = mpu6050.getAccX()*9.81; //(m/s^2)
   imu_msg.linear_acceleration.y = mpu6050.getAccY()*9.81; //(m/s^2)
